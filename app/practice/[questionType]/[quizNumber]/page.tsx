@@ -1,3 +1,5 @@
+// DEPLOY TEST
+
 import QuizClient from "./QuizClient";
 
 export default function Page({
