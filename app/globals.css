@@ -1,31 +1,28 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Force light mode and black text for quiz pages - AGGRESSIVE FIX */
+[data-quiz-page] {
+  color-scheme: light !important;
+  background-color: #ffffff !important;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+[data-quiz-page],
+[data-quiz-page] * {
+  color: #000000 !important;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Allow buttons and UI elements to have their own colors */
+[data-quiz-page] button[data-ui-element] {
+  color: inherit !important;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+[data-quiz-page] button[data-ui-element] span {
+  color: inherit !important;
 }
-html,
-body {
-  height: 100%;
-  margin: 0;
+
+/* Preserve button backgrounds */
+[data-quiz-page] button {
+  background-color: var(--button-bg) !important;
 }
