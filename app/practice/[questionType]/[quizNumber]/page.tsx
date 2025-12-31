@@ -16,25 +16,6 @@ interface Question {
   answers: Answer[];
 }
 
-const saveAttempt = (section: 'reading-writing' | 'math', questionType: string, quizNumber: number, score: number) => {
-  const attempt = {
-    id: `${Date.now()}-${Math.random()}`,
-    date: new Date().toISOString(),
-    section,
-    questionType,
-    quizNumber,
-    score,
-    totalQuestions: 5
-  };
-  
-  const existing = localStorage.getItem('quiz-attempts');
-  const attempts = existing ? JSON.parse(existing) : [];
-  attempts.push(attempt);
-  localStorage.setItem('quiz-attempts', JSON.stringify(attempts));
-};
-
-
-
 export default function QuizPage() {
   const params = useParams<{ questionType: string; quizNumber: string }>();
   const router = useRouter();
@@ -117,270 +98,276 @@ export default function QuizPage() {
   };
 
   return (
-    <div style={{
-      width: '100vw',
-      height: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      backgroundColor: '#f5f5f5',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    }}>
-      {/* Top bar */}
-      <div style={{
-        height: '60px',
-        backgroundColor: '#ffffff',
-        borderBottom: '1px solid #d1d5db',
+    <>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          .quiz-page {
+            color: #000000 !important;
+          }
+          .quiz-page * {
+            color: #000000 !important;
+          }
+          .quiz-page button {
+            color: inherit !important;
+          }
+        `
+      }} />
+      
+      <div className="quiz-page" style={{
+        width: '100vw',
+        height: '100vh',
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0 2rem',
-        flexShrink: 0
+        flexDirection: 'column',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        backgroundColor: '#f5f5f5',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        zIndex: 9999
       }}>
+        {/* Top bar */}
         <div style={{
+          height: '60px',
+          backgroundColor: '#ffffff',
+          borderBottom: '1px solid #d1d5db',
           display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
-          gap: '1rem'
+          padding: '0 2rem',
+          flexShrink: 0
         }}>
           <div style={{
-            width: '32px',
-            height: '32px',
-            backgroundColor: '#000000',
-            color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1rem',
-            fontWeight: '600'
+            gap: '1rem'
           }}>
-            {currentQuestionIndex + 1}
+            <div style={{
+              width: '32px',
+              height: '32px',
+              backgroundColor: '#000000',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1rem',
+              fontWeight: '600'
+            }}>
+              {currentQuestionIndex + 1}
+            </div>
+            <button
+              onClick={() => setMarkedForReview(!markedForReview)}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: 'transparent',
+                border: markedForReview ? '2px solid #000000' : '1px solid #9ca3af',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                color: '#000000',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <span>{markedForReview ? '★' : '☆'}</span>
+              Mark for Review
+            </button>
           </div>
           <button
-            onClick={() => setMarkedForReview(!markedForReview)}
+            onClick={() => router.push(`/practice/${params.questionType}`)}
             style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: 'transparent',
-              border: markedForReview ? '2px solid #000000' : '1px solid #9ca3af',
+              padding: '0.5rem 1.5rem',
+              backgroundColor: '#2563eb',
+              color: '#ffffff',
+              border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '0.875rem',
-              fontWeight: '500',
-              color: '#000000',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
+              fontWeight: '600'
             }}
           >
-            <span>{markedForReview ? '★' : '☆'}</span>
-            Mark for Review
+            Exit
           </button>
         </div>
-        <button
-          onClick={() => router.push(`/practice/${params.questionType}`)}
-          style={{
-            padding: '0.5rem 1.5rem',
-            backgroundColor: '#2563eb',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '0.875rem',
-            fontWeight: '600'
-          }}
-        >
-          ABC
-        </button>
-      </div>
 
-      {/* Split screen */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        overflow: 'hidden'
-      }}>
-        {/* Left pane - Passage */}
+        {/* Split screen */}
         <div style={{
           flex: 1,
-          overflow: 'auto',
-          padding: '3rem 2.5rem',
-          backgroundColor: '#f9fafb'
+          display: 'flex',
+          overflow: 'hidden'
         }}>
-          <div style={{ maxWidth: '650px', margin: '0 auto' }}>
-            <p style={{
-              lineHeight: '1.8',
-              fontSize: '1rem',
-              color: '#000000',
-              margin: 0
-            }}>
-              {currentQuestion.passage}
-            </p>
+          {/* Left pane - Passage */}
+          <div style={{
+            flex: 1,
+            overflow: 'auto',
+            padding: '3rem 2.5rem',
+            backgroundColor: '#f9fafb'
+          }}>
+            <div style={{ maxWidth: '650px', margin: '0 auto' }}>
+              <p style={{
+                lineHeight: '1.8',
+                fontSize: '1rem',
+                color: '#000000',
+                margin: 0
+              }}>
+                {currentQuestion.passage}
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Vertical divider */}
-        <div style={{
-          width: '1px',
-          backgroundColor: '#d1d5db',
-          flexShrink: 0
-        }} />
+          {/* Vertical divider */}
+          <div style={{
+            width: '1px',
+            backgroundColor: '#d1d5db',
+            flexShrink: 0
+          }} />
 
-        {/* Right pane - Question */}
-        <div style={{
-          flex: 1,
-          overflow: 'auto',
-          padding: '3rem 2.5rem',
-          backgroundColor: '#ffffff'
-        }}>
-          <div style={{ maxWidth: '650px', margin: '0 auto' }}>
-            <h3 style={{
-              fontWeight: '400',
-              marginBottom: '2rem',
-              fontSize: '1rem',
-              lineHeight: '1.6',
-              color: '#000000',
-              marginTop: 0
-            }}>
-              {currentQuestion.question}
-            </h3>
+          {/* Right pane - Question */}
+          <div style={{
+            flex: 1,
+            overflow: 'auto',
+            padding: '3rem 2.5rem',
+            backgroundColor: '#ffffff'
+          }}>
+            <div style={{ maxWidth: '650px', margin: '0 auto' }}>
+              <h3 style={{
+                fontWeight: '400',
+                marginBottom: '2rem',
+                fontSize: '1rem',
+                lineHeight: '1.6',
+                color: '#000000',
+                marginTop: 0
+              }}>
+                {currentQuestion.question}
+              </h3>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {currentQuestion.answers.map((answer: Answer) => (
-                <button
-                  key={answer.id}
-                  onClick={() => handleAnswerSelect(answer.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                    width: '100%',
-                    padding: '1rem 1.25rem',
-                    backgroundColor: '#ffffff',
-                    border: selectedAnswer === answer.id ? '2px solid #000000' : '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    fontSize: '1rem',
-                    lineHeight: '1.5',
-                    transition: 'all 0.15s',
-                    position: 'relative'
-                  }}
-                >
-                  <div style={{
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    border: selectedAnswer === answer.id ? '2px solid #000000' : '2px solid #9ca3af',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    backgroundColor: selectedAnswer === answer.id ? '#000000' : '#ffffff'
-                  }}>
-                    {selectedAnswer === answer.id && (
-                      <div style={{
-                        width: '10px',
-                        height: '10px',
-                        borderRadius: '50%',
-                        backgroundColor: '#ffffff'
-                      }} />
-                    )}
-                  </div>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    flex: 1
-                  }}>
-                    <span style={{
-                      fontWeight: '600',
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {currentQuestion.answers.map((answer: Answer) => (
+                  <button
+                    key={answer.id}
+                    onClick={() => handleAnswerSelect(answer.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '1rem',
+                      width: '100%',
+                      padding: '1rem 1.25rem',
+                      backgroundColor: '#ffffff',
+                      border: selectedAnswer === answer.id ? '2px solid #000000' : '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: '1rem',
+                      lineHeight: '1.5',
+                      transition: 'all 0.15s',
+                      position: 'relative',
                       color: '#000000'
+                    }}
+                  >
+                    <div style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      border: selectedAnswer === answer.id ? '2px solid #000000' : '2px solid #9ca3af',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      backgroundColor: selectedAnswer === answer.id ? '#000000' : '#ffffff'
                     }}>
-                      {answer.id}
-                    </span>
-                    <span style={{ color: '#000000' }}>
-                      {answer.text}
-                    </span>
-                  </div>
-                  {selectedAnswer === answer.id && (
+                      {selectedAnswer === answer.id && (
+                        <div style={{
+                          width: '10px',
+                          height: '10px',
+                          borderRadius: '50%',
+                          backgroundColor: '#ffffff'
+                        }} />
+                      )}
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      flex: 1
+                    }}>
+                      <span style={{
+                        fontWeight: '600',
+                        color: '#000000'
+                      }}>
+                        {answer.id}
+                      </span>
+                      <span style={{ color: '#000000' }}>
+                        {answer.text}
+                      </span>
+                    </div>
                     <div style={{
                       position: 'absolute',
                       right: '1rem',
                       top: '50%',
                       transform: 'translateY(-50%)',
                       fontSize: '1.25rem',
-                      color: '#000000'
+                      color: '#9ca3af'
                     }}>
                       ⊕
                     </div>
-                  )}
-                  <div style={{
-                    position: 'absolute',
-                    right: '1rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    fontSize: '1.25rem',
-                    color: '#9ca3af'
-                  }}>
-                    ⊕
-                  </div>
-                </button>
-              ))}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Bottom bar */}
-      <div style={{
-        height: '70px',
-        backgroundColor: '#ffffff',
-        borderTop: '1px solid #d1d5db',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0 2rem',
-        flexShrink: 0
-      }}>
+        {/* Bottom bar */}
         <div style={{
-          fontSize: '0.875rem',
-          color: '#000000',
-          fontWeight: '500'
-        }}>
-          Niko Murray
-        </div>
-        <div style={{
+          height: '70px',
+          backgroundColor: '#ffffff',
+          borderTop: '1px solid #d1d5db',
           display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
-          gap: '0.5rem',
-          backgroundColor: '#1f2937',
-          color: '#ffffff',
-          padding: '0.625rem 1rem',
-          borderRadius: '6px',
-          fontSize: '0.875rem',
-          fontWeight: '600'
+          padding: '0 2rem',
+          flexShrink: 0
         }}>
-          <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
-          <span>▲</span>
-        </div>
-        <button
-          onClick={handleNext}
-          disabled={!selectedAnswer}
-          style={{
-            padding: '0.75rem 2.5rem',
-            backgroundColor: selectedAnswer ? '#2563eb' : '#e5e7eb',
-            color: selectedAnswer ? '#ffffff' : '#9ca3af',
-            border: 'none',
+          <div style={{
+            fontSize: '0.875rem',
+            color: '#000000',
+            fontWeight: '500'
+          }}>
+            Niko Murray
+          </div>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            backgroundColor: '#1f2937',
+            color: '#ffffff',
+            padding: '0.625rem 1rem',
             borderRadius: '6px',
-            cursor: selectedAnswer ? 'pointer' : 'not-allowed',
-            fontWeight: '600',
-            fontSize: '1rem'
-          }}
-        >
-          {currentQuestionIndex < questions.length - 1 ? 'Next' : 'Finish'}
-        </button>
+            fontSize: '0.875rem',
+            fontWeight: '600'
+          }}>
+            <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
+            <span>▲</span>
+          </div>
+          <button
+            onClick={handleNext}
+            disabled={!selectedAnswer}
+            style={{
+              padding: '0.75rem 2.5rem',
+              backgroundColor: selectedAnswer ? '#2563eb' : '#e5e7eb',
+              color: selectedAnswer ? '#ffffff' : '#9ca3af',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: selectedAnswer ? 'pointer' : 'not-allowed',
+              fontWeight: '600',
+              fontSize: '1rem'
+            }}
+          >
+            {currentQuestionIndex < questions.length - 1 ? 'Next' : 'Finish'}
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
