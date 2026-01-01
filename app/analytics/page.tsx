@@ -1,4 +1,3 @@
-// app/analytics/page.tsx
 'use client';
 
 import { useEffect, useState, CSSProperties } from 'react';
@@ -14,29 +13,17 @@ interface QuizAttempt {
   totalQuestions: number;
 }
 
-interface QuestionTypeStats {
-  questionType: string;
-  section: 'reading-writing' | 'math';
-  attempts: number;
-  totalScore: number;
-  averageScore: number;
-  proficientCount: number;
-  proficiencyRate: number;
-}
-
 export default function AnalyticsPage() {
   const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load attempts from localStorage
     const stored = localStorage.getItem('quiz-attempts');
     if (stored) {
       try {
-        const parsed = JSON.parse(stored);
-        setAttempts(parsed);
+        setAttempts(JSON.parse(stored));
       } catch (e) {
-        console.error('Failed to parse quiz attempts:', e);
+        console.error('Failed to parse attempts:', e);
       }
     }
     setLoading(false);
@@ -45,12 +32,8 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <div style={containerStyle}>
-        <div style={headerStyle}>
-          <h1 style={titleStyle}>Analytics</h1>
-        </div>
-        <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
-          Loading...
-        </div>
+        <h1 style={titleStyle}>Analytics</h1>
+        <p style={{ textAlign: 'center', color: '#6b7280', padding: '2rem' }}>Loading...</p>
       </div>
     );
   }
@@ -58,18 +41,16 @@ export default function AnalyticsPage() {
   if (attempts.length === 0) {
     return (
       <div style={containerStyle}>
-        <div style={headerStyle}>
-          <h1 style={titleStyle}>Analytics</h1>
-        </div>
+        <h1 style={titleStyle}>Analytics</h1>
         <div style={emptyStateStyle}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
+          <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📊</div>
           <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: '#111827' }}>
             No data yet
           </h2>
-          <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
+          <p style={{ color: '#6b7280', marginBottom: '1.5rem', fontSize: '1rem' }}>
             Complete some targeted practice quizzes to see your analytics.
           </p>
-          <Link href="/practice" style={linkButtonStyle}>
+          <Link href="/practice" style={buttonStyle}>
             Start Practicing
           </Link>
         </div>
@@ -77,63 +58,26 @@ export default function AnalyticsPage() {
     );
   }
 
-  // Calculate overall stats
+  // Calculate stats
   const totalAttempts = attempts.length;
   const totalScore = attempts.reduce((sum, a) => sum + a.score, 0);
   const averageScore = totalScore / totalAttempts;
-  const proficientAttempts = attempts.filter(a => a.score >= 4).length;
-  const proficiencyRate = (proficientAttempts / totalAttempts) * 100;
+  const proficientCount = attempts.filter(a => a.score >= 4).length;
+  const proficiencyRate = (proficientCount / totalAttempts) * 100;
 
-  // Calculate stats by section
-  const readingWritingAttempts = attempts.filter(a => a.section === 'reading-writing');
+  // By section
+  const rwAttempts = attempts.filter(a => a.section === 'reading-writing');
   const mathAttempts = attempts.filter(a => a.section === 'math');
-
-  const rwAverage = readingWritingAttempts.length > 0
-    ? readingWritingAttempts.reduce((sum, a) => sum + a.score, 0) / readingWritingAttempts.length
+  
+  const rwAvg = rwAttempts.length > 0 
+    ? rwAttempts.reduce((sum, a) => sum + a.score, 0) / rwAttempts.length 
     : 0;
-  const mathAverage = mathAttempts.length > 0
-    ? mathAttempts.reduce((sum, a) => sum + a.score, 0) / mathAttempts.length
-    : 0;
-
-  const rwProficient = readingWritingAttempts.filter(a => a.score >= 4).length;
-  const mathProficient = mathAttempts.filter(a => a.score >= 4).length;
-
-  const rwProficiencyRate = readingWritingAttempts.length > 0
-    ? (rwProficient / readingWritingAttempts.length) * 100
-    : 0;
-  const mathProficiencyRate = mathAttempts.length > 0
-    ? (mathProficient / mathAttempts.length) * 100
+  const mathAvg = mathAttempts.length > 0 
+    ? mathAttempts.reduce((sum, a) => sum + a.score, 0) / mathAttempts.length 
     : 0;
 
-  // Calculate stats by question type
-  const typeStatsMap = new Map<string, QuestionTypeStats>();
-  attempts.forEach(attempt => {
-    const key = attempt.questionType;
-    if (!typeStatsMap.has(key)) {
-      typeStatsMap.set(key, {
-        questionType: attempt.questionType,
-        section: attempt.section,
-        attempts: 0,
-        totalScore: 0,
-        averageScore: 0,
-        proficientCount: 0,
-        proficiencyRate: 0
-      });
-    }
-    const stats = typeStatsMap.get(key)!;
-    stats.attempts++;
-    stats.totalScore += attempt.score;
-    if (attempt.score >= 4) stats.proficientCount++;
-  });
-
-  const typeStats = Array.from(typeStatsMap.values()).map(stats => ({
-    ...stats,
-    averageScore: stats.totalScore / stats.attempts,
-    proficiencyRate: (stats.proficientCount / stats.attempts) * 100
-  })).sort((a, b) => b.averageScore - a.averageScore);
-
-  // Recent activity (last 10)
-  const recentAttempts = [...attempts]
+  // Recent activity
+  const recent = [...attempts]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 10);
 
@@ -141,131 +85,83 @@ export default function AnalyticsPage() {
     <div style={containerStyle}>
       <div style={headerStyle}>
         <h1 style={titleStyle}>Analytics</h1>
-        <Link href="/recommendations" style={secondaryButtonStyle}>
+        <Link href="/recommendations" style={buttonStyle}>
           What to Work On →
         </Link>
       </div>
 
       <div style={contentStyle}>
-        {/* Overall Performance */}
+        {/* Overall Stats */}
         <section style={sectionStyle}>
           <h2 style={sectionTitleStyle}>Overall Performance</h2>
-          <div style={cardGridStyle}>
-            <div style={statCardStyle}>
-              <div style={statLabelStyle}>Total Quizzes</div>
-              <div style={statValueStyle}>{totalAttempts}</div>
+          <div style={gridStyle}>
+            <div style={cardStyle}>
+              <div style={labelStyle}>Total Quizzes</div>
+              <div style={valueStyle}>{totalAttempts}</div>
             </div>
-            <div style={statCardStyle}>
-              <div style={statLabelStyle}>Average Score</div>
-              <div style={statValueStyle}>
-                {averageScore.toFixed(1)}<span style={{ fontSize: '1.5rem', color: '#6b7280' }}>/5</span>
+            <div style={cardStyle}>
+              <div style={labelStyle}>Average Score</div>
+              <div style={valueStyle}>
+                {averageScore.toFixed(1)}
+                <span style={{ fontSize: '1.5rem', color: '#6b7280' }}>/5</span>
               </div>
             </div>
-            <div style={statCardStyle}>
-              <div style={statLabelStyle}>Proficiency Rate</div>
-              <div style={statValueStyle}>
-                {proficiencyRate.toFixed(0)}<span style={{ fontSize: '1.5rem', color: '#6b7280' }}>%</span>
+            <div style={cardStyle}>
+              <div style={labelStyle}>Proficiency Rate</div>
+              <div style={valueStyle}>
+                {proficiencyRate.toFixed(0)}
+                <span style={{ fontSize: '1.5rem', color: '#6b7280' }}>%</span>
               </div>
-              <div style={statSubtextStyle}>{proficientAttempts} of {totalAttempts} proficient (4+/5)</div>
+              <div style={subtextStyle}>
+                {proficientCount} of {totalAttempts} proficient (4+/5)
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Section Breakdown */}
+        {/* By Section */}
         <section style={sectionStyle}>
           <h2 style={sectionTitleStyle}>By Section</h2>
-          <div style={cardGridStyle}>
-            <div style={statCardStyle}>
-              <div style={statLabelStyle}>Reading & Writing</div>
-              <div style={statValueStyle}>
-                {rwAverage.toFixed(1)}<span style={{ fontSize: '1.5rem', color: '#6b7280' }}>/5</span>
+          <div style={gridStyle}>
+            <div style={cardStyle}>
+              <div style={labelStyle}>Reading & Writing</div>
+              <div style={valueStyle}>
+                {rwAvg.toFixed(1)}
+                <span style={{ fontSize: '1.5rem', color: '#6b7280' }}>/5</span>
               </div>
-              <div style={statSubtextStyle}>
-                {readingWritingAttempts.length} attempts · {rwProficiencyRate.toFixed(0)}% proficient
-              </div>
+              <div style={subtextStyle}>{rwAttempts.length} attempts</div>
             </div>
-            <div style={statCardStyle}>
-              <div style={statLabelStyle}>Math</div>
-              <div style={statValueStyle}>
-                {mathAverage.toFixed(1)}<span style={{ fontSize: '1.5rem', color: '#6b7280' }}>/5</span>
+            <div style={cardStyle}>
+              <div style={labelStyle}>Math</div>
+              <div style={valueStyle}>
+                {mathAvg.toFixed(1)}
+                <span style={{ fontSize: '1.5rem', color: '#6b7280' }}>/5</span>
               </div>
-              <div style={statSubtextStyle}>
-                {mathAttempts.length} attempts · {mathProficiencyRate.toFixed(0)}% proficient
-              </div>
+              <div style={subtextStyle}>{mathAttempts.length} attempts</div>
             </div>
-          </div>
-        </section>
-
-        {/* Question Type Performance */}
-        <section style={sectionStyle}>
-          <h2 style={sectionTitleStyle}>By Question Type</h2>
-          <div style={tableContainerStyle}>
-            <table style={tableStyle}>
-              <thead>
-                <tr style={tableHeaderRowStyle}>
-                  <th style={tableHeaderCellStyle}>Question Type</th>
-                  <th style={tableHeaderCellStyle}>Section</th>
-                  <th style={tableHeaderCellStyle}>Attempts</th>
-                  <th style={tableHeaderCellStyle}>Avg Score</th>
-                  <th style={tableHeaderCellStyle}>Proficiency</th>
-                  <th style={tableHeaderCellStyle}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {typeStats.map(stat => (
-                  <tr key={stat.questionType} style={tableRowStyle}>
-                    <td style={tableCellStyle}>
-                      <span style={{ fontWeight: 500, textTransform: 'capitalize' }}>
-                        {stat.questionType.replace(/-/g, ' ')}
-                      </span>
-                    </td>
-                    <td style={tableCellStyle}>
-                      <span style={{ textTransform: 'capitalize' }}>
-                        {stat.section === 'reading-writing' ? 'R&W' : 'Math'}
-                      </span>
-                    </td>
-                    <td style={tableCellStyle}>{stat.attempts}</td>
-                    <td style={tableCellStyle}>
-                      <span style={{ fontWeight: 600 }}>{stat.averageScore.toFixed(1)}</span>/5
-                    </td>
-                    <td style={tableCellStyle}>{stat.proficiencyRate.toFixed(0)}%</td>
-                    <td style={tableCellStyle}>
-                      <Link
-                        href={`/practice/${stat.questionType}`}
-                        style={tableLinkStyle}
-                      >
-                        Practice →
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </section>
 
         {/* Recent Activity */}
         <section style={sectionStyle}>
           <h2 style={sectionTitleStyle}>Recent Activity</h2>
-          <div style={activityListStyle}>
-            {recentAttempts.map(attempt => (
-              <div key={attempt.id} style={activityItemStyle}>
+          <div style={listStyle}>
+            {recent.map(attempt => (
+              <div key={attempt.id} style={listItemStyle}>
                 <div style={{ flex: 1 }}>
-                  <div style={activityTitleStyle}>
+                  <div style={itemTitleStyle}>
                     {attempt.questionType.replace(/-/g, ' ')} - Quiz {attempt.quizNumber}
                   </div>
-                  <div style={activityMetaStyle}>
+                  <div style={itemMetaStyle}>
                     {new Date(attempt.date).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
                       year: 'numeric'
                     })}
-                    {' · '}
-                    {attempt.section === 'reading-writing' ? 'Reading & Writing' : 'Math'}
                   </div>
                 </div>
                 <div style={{
-                  ...activityScoreStyle,
+                  ...scoreStyle,
                   backgroundColor: attempt.score >= 4 ? '#dcfce7' : '#fee2e2',
                   color: attempt.score >= 4 ? '#166534' : '#991b1b'
                 }}>
@@ -287,9 +183,9 @@ const containerStyle: CSSProperties = {
 };
 
 const headerStyle: CSSProperties = {
+  padding: '2rem',
   backgroundColor: '#ffffff',
   borderBottom: '1px solid #e5e7eb',
-  padding: '2rem',
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center'
@@ -302,14 +198,15 @@ const titleStyle: CSSProperties = {
   margin: 0
 };
 
-const secondaryButtonStyle: CSSProperties = {
+const buttonStyle: CSSProperties = {
   padding: '0.75rem 1.5rem',
   backgroundColor: '#2563eb',
   color: '#ffffff',
   textDecoration: 'none',
   borderRadius: '6px',
   fontWeight: 600,
-  fontSize: '0.875rem'
+  fontSize: '0.875rem',
+  display: 'inline-block'
 };
 
 const contentStyle: CSSProperties = {
@@ -329,91 +226,47 @@ const sectionTitleStyle: CSSProperties = {
   marginBottom: '1rem'
 };
 
-const cardGridStyle: CSSProperties = {
+const gridStyle: CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
   gap: '1rem'
 };
 
-const statCardStyle: CSSProperties = {
+const cardStyle: CSSProperties = {
   backgroundColor: '#ffffff',
   border: '1px solid #e5e7eb',
   borderRadius: '8px',
   padding: '1.5rem'
 };
 
-const statLabelStyle: CSSProperties = {
+const labelStyle: CSSProperties = {
   fontSize: '0.875rem',
   color: '#6b7280',
   marginBottom: '0.5rem',
   fontWeight: 500
 };
 
-const statValueStyle: CSSProperties = {
+const valueStyle: CSSProperties = {
   fontSize: '2.5rem',
   fontWeight: 700,
   color: '#111827',
   lineHeight: 1.2
 };
 
-const statSubtextStyle: CSSProperties = {
+const subtextStyle: CSSProperties = {
   fontSize: '0.875rem',
   color: '#6b7280',
   marginTop: '0.5rem'
 };
 
-const tableContainerStyle: CSSProperties = {
+const listStyle: CSSProperties = {
   backgroundColor: '#ffffff',
   border: '1px solid #e5e7eb',
   borderRadius: '8px',
   overflow: 'hidden'
 };
 
-const tableStyle: CSSProperties = {
-  width: '100%',
-  borderCollapse: 'collapse'
-};
-
-const tableHeaderRowStyle: CSSProperties = {
-  backgroundColor: '#f9fafb',
-  borderBottom: '1px solid #e5e7eb'
-};
-
-const tableHeaderCellStyle: CSSProperties = {
-  padding: '0.75rem 1rem',
-  textAlign: 'left',
-  fontSize: '0.75rem',
-  fontWeight: 600,
-  color: '#6b7280',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em'
-};
-
-const tableRowStyle: CSSProperties = {
-  borderBottom: '1px solid #e5e7eb'
-};
-
-const tableCellStyle: CSSProperties = {
-  padding: '1rem',
-  fontSize: '0.875rem',
-  color: '#111827'
-};
-
-const tableLinkStyle: CSSProperties = {
-  color: '#2563eb',
-  textDecoration: 'none',
-  fontWeight: 500,
-  fontSize: '0.875rem'
-};
-
-const activityListStyle: CSSProperties = {
-  backgroundColor: '#ffffff',
-  border: '1px solid #e5e7eb',
-  borderRadius: '8px',
-  overflow: 'hidden'
-};
-
-const activityItemStyle: CSSProperties = {
+const listItemStyle: CSSProperties = {
   padding: '1rem 1.5rem',
   borderBottom: '1px solid #e5e7eb',
   display: 'flex',
@@ -421,7 +274,7 @@ const activityItemStyle: CSSProperties = {
   alignItems: 'center'
 };
 
-const activityTitleStyle: CSSProperties = {
+const itemTitleStyle: CSSProperties = {
   fontSize: '0.875rem',
   fontWeight: 600,
   color: '#111827',
@@ -429,12 +282,12 @@ const activityTitleStyle: CSSProperties = {
   marginBottom: '0.25rem'
 };
 
-const activityMetaStyle: CSSProperties = {
+const itemMetaStyle: CSSProperties = {
   fontSize: '0.75rem',
   color: '#6b7280'
 };
 
-const activityScoreStyle: CSSProperties = {
+const scoreStyle: CSSProperties = {
   padding: '0.5rem 1rem',
   borderRadius: '6px',
   fontWeight: 700,
@@ -443,17 +296,5 @@ const activityScoreStyle: CSSProperties = {
 
 const emptyStateStyle: CSSProperties = {
   textAlign: 'center',
-  padding: '4rem 2rem',
-  maxWidth: '500px',
-  margin: '0 auto'
-};
-
-const linkButtonStyle: CSSProperties = {
-  display: 'inline-block',
-  padding: '0.75rem 1.5rem',
-  backgroundColor: '#2563eb',
-  color: '#ffffff',
-  textDecoration: 'none',
-  borderRadius: '6px',
-  fontWeight: 600
+  padding: '4rem 2rem'
 };
